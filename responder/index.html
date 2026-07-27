@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Responder · Pulso de Equipo</title>
+<style>
+  :root{--navy:#050d1f;--teal:#00b7a8;--teal2:#19d3c5;--gold:#ffb23e;--muted:rgba(255,255,255,.62);--line:rgba(255,255,255,.12)}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1200px 600px at 50% -10%,#0d2444 0%,var(--navy) 55%);color:#fff;
+    font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh;line-height:1.5}
+  .wrap{max-width:540px;margin:0 auto;padding:26px 18px 70px}
+  .brandbar{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:14px}
+  .brandbar .dot{width:8px;height:8px;border-radius:50%;background:var(--teal);box-shadow:0 0 12px var(--teal)}
+  .brandbar span{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .grad{background:linear-gradient(120deg,var(--teal2),var(--gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .eyebrow{color:var(--teal2);font-weight:700;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;text-align:center;margin-bottom:6px}
+  h1{font-size:1.5rem;font-weight:800;text-align:center;margin-bottom:22px;letter-spacing:-.01em}
+  .view{display:none}.view.active{display:block;animation:fade .4s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
+  label.fld{display:block;font-size:1rem;font-weight:600;margin:18px 0 8px}
+  .qnum{color:var(--gold);font-weight:800;margin-right:6px}
+  input.ic,textarea.ic{width:100%;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.16);
+    border-radius:12px;padding:14px 15px;color:#fff;font-size:1rem;font-family:inherit;outline:none;transition:.18s;resize:vertical}
+  input.ic:focus,textarea.ic:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,183,168,.16)}
+  input.ic::placeholder,textarea.ic::placeholder{color:rgba(255,255,255,.3)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;border:none;border-radius:13px;
+    padding:16px 18px;font-size:1rem;font-weight:700;cursor:pointer;transition:.18s;font-family:inherit;margin-top:22px}
+  .btn-primary{background:linear-gradient(120deg,var(--teal),#0a9f93);color:#00170f;box-shadow:0 8px 26px rgba(0,183,168,.28)}
+  .btn-primary:disabled{opacity:.5}
+  .err{background:rgba(255,71,87,.12);border:1px solid rgba(255,71,87,.4);color:#ffb3ba;border-radius:11px;padding:12px 14px;font-size:.88rem;margin-top:14px;display:none}
+  .load,.done{text-align:center;padding:60px 12px;color:var(--muted)}
+  .done .em{font-size:3rem;margin-bottom:10px}
+  .spin{width:26px;height:26px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--teal);border-radius:50%;animation:sp .7s linear infinite;display:inline-block}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .foot{margin-top:28px;text-align:center;color:rgba(255,255,255,.4);font-size:.74rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brandbar"><span class="dot"></span><span>Pulso de Equipo</span></div>
+  <div id="v-load" class="load"><span class="spin"></span><div style="margin-top:12px">Cargando la consulta…</div></div>
+
+  <section id="v-form" class="view">
+    <div class="eyebrow">Tu opinión cuenta</div>
+    <h1 id="titulo"></h1>
+    <label class="fld" for="nombre">Tu nombre <span style="color:var(--muted);font-weight:400">(opcional)</span></label>
+    <input class="ic" id="nombre" maxlength="60" placeholder="Nombre">
+    <label class="fld"><span class="qnum">1.</span><span id="lq1"></span></label>
+    <textarea class="ic" id="a1" rows="3" maxlength="500" placeholder="Tu respuesta…"></textarea>
+    <label class="fld"><span class="qnum">2.</span><span id="lq2"></span></label>
+    <textarea class="ic" id="a2" rows="3" maxlength="500" placeholder="Tu respuesta…"></textarea>
+    <label class="fld"><span class="qnum">3.</span><span id="lq3"></span></label>
+    <textarea class="ic" id="a3" rows="3" maxlength="500" placeholder="Tu respuesta…"></textarea>
+    <button class="btn btn-primary" id="sendBtn" onclick="enviar()">Enviar mis respuestas ✨</button>
+    <div class="err" id="err"></div>
+  </section>
+
+  <section id="v-done" class="view">
+    <div class="done"><div class="em">✅</div>
+      <h1 style="font-size:1.35rem">¡Gracias por responder!</h1>
+      <p style="margin-top:8px">Tu aporte ya llegó a tu líder. Puedes cerrar esta página.</p>
+    </div>
+  </section>
+
+  <section id="v-error" class="view">
+    <div class="done"><div class="em">🔎</div>
+      <h1 style="font-size:1.3rem">No encontramos esta consulta</h1>
+      <p style="margin-top:8px">Verifica el enlace con quien te lo compartió.</p>
+    </div>
+  </section>
+
+  <div class="foot">IA aplicada para líderes</div>
+</div>
+
+<script>
+const SB_URL="https://nvgkhdrrxqdgxktfkioa.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52Z2toZHJyeHFkZ3hrdGZraW9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MzY4MjYsImV4cCI6MjA5MzQxMjgyNn0.mikJZpOf6pIupH1w_hFlMIzCoOMB-wJCMJHyP46YLeg";
+const SES=new URLSearchParams(location.search).get('s');
+let cfg=null;
+function show(id){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById('v-load').style.display='none';document.getElementById(id).classList.add('active');window.scrollTo(0,0);}
+function esc(s){return (s||'').replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));}
+
+async function load(){
+  if(!SES){show('v-error');return;}
+  try{
+    const r=await fetch(SB_URL+"/rest/v1/pulso_sesiones?id=eq."+encodeURIComponent(SES)+"&select=titulo,q1,q2,q3",
+      {headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY}});
+    const d=await r.json();
+    if(!d||!d.length){show('v-error');return;}
+    cfg=d[0];
+    document.getElementById('titulo').textContent=cfg.titulo||'Consulta a tu equipo';
+    document.getElementById('lq1').textContent=cfg.q1;
+    document.getElementById('lq2').textContent=cfg.q2;
+    document.getElementById('lq3').textContent=cfg.q3;
+    show('v-form');
+  }catch(e){show('v-error');}
+}
+async function enviar(){
+  const a1=document.getElementById('a1').value.trim(),a2=document.getElementById('a2').value.trim(),a3=document.getElementById('a3').value.trim();
+  const err=document.getElementById('err');
+  if(!a1&&!a2&&!a3){err.textContent='Responde al menos una pregunta.';err.style.display='block';return;}
+  err.style.display='none';
+  const btn=document.getElementById('sendBtn');btn.disabled=true;btn.textContent='Enviando…';
+  const payload={sesion:SES,nombre:document.getElementById('nombre').value.trim(),r1:a1,r2:a2,r3:a3};
+  try{
+    const res=await fetch(SB_URL+"/rest/v1/pulso_respuestas",{method:"POST",
+      headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Prefer":"return=minimal"},
+      body:JSON.stringify(payload)});
+    if(!res.ok) throw 0;
+    show('v-done');
+  }catch(e){ btn.disabled=false;btn.textContent='Enviar mis respuestas ✨';err.textContent='No se pudo enviar. Revisa tu conexión e intenta de nuevo.';err.style.display='block'; }
+}
+load();
+</script>
+</body>
+</html>

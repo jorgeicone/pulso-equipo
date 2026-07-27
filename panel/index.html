@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resultados · Pulso de Equipo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{--navy:#050d1f;--teal:#00b7a8;--teal2:#19d3c5;--gold:#ffb23e;--white:#fff;
+    --muted:rgba(255,255,255,.6);--line:rgba(255,255,255,.12);--card:rgba(255,255,255,.05)}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1400px 700px at 50% -8%,#0d2444 0%,var(--navy) 55%);color:#fff;
+    font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh;overflow-x:hidden}
+  .grad{background:linear-gradient(120deg,var(--teal2),var(--gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .top{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 5vw;border-bottom:1px solid var(--line)}
+  .top .eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--teal2);font-weight:700}
+  .top h1{font-size:1.35rem;font-weight:800;letter-spacing:-.01em;margin-top:3px}
+  .counter{text-align:right;flex:0 0 auto}.counter .num{font-size:2.6rem;font-weight:900;line-height:1}
+  .counter .lbl{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  .bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:18px 5vw 0}
+  .cta{background:linear-gradient(120deg,var(--gold),#ff8c00);color:#241400;border:none;border-radius:12px;padding:13px 22px;font-size:1rem;font-weight:800;cursor:pointer;font-family:inherit}
+  .cta:hover{transform:translateY(-1px)}
+  .tabs{display:flex;gap:10px;flex-wrap:wrap;padding:16px 5vw}
+  .tab{background:var(--card);border:1.5px solid var(--line);color:var(--muted);border-radius:11px;padding:10px 16px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit;max-width:90vw}
+  .tab.active{border-color:var(--teal);color:#fff;background:rgba(0,183,168,.14)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;padding:6px 5vw 40px}
+  .resp{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:14px;padding:15px 17px;animation:pop .4s ease}
+  @keyframes pop{from{opacity:0;transform:translateY(10px)}to{opacity:1}}
+  .resp .who{font-size:.78rem;color:var(--teal2);font-weight:700;margin-bottom:6px;text-transform:uppercase}
+  .resp .txt{font-size:1rem;line-height:1.4}
+  .empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:60px 20px;font-size:1.05rem}
+  .empty .p{font-size:2.6rem;margin-bottom:10px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:12px;padding:14px 20px;font-size:1rem;font-weight:800;cursor:pointer;font-family:inherit}
+  .btn-gold{background:linear-gradient(120deg,var(--gold),#ff8c00);color:#241400}.btn-ghost{background:transparent;border:1.5px solid var(--line);color:#fff}
+  .btn-teal{background:linear-gradient(120deg,var(--teal),#0a9f93);color:#00170f}
+  .overlay{position:fixed;inset:0;background:rgba(4,10,20,.9);backdrop-filter:blur(8px);z-index:50;display:none;align-items:center;justify-content:center;padding:24px}
+  .overlay.show{display:flex}
+  .modal{background:linear-gradient(160deg,#0a1d3a,#061323);border:1px solid var(--line);border-radius:22px;max-width:900px;width:100%;max-height:92vh;overflow:auto;padding:34px 38px;position:relative}
+  .modal .close{position:absolute;top:16px;right:20px;background:none;border:none;color:var(--muted);font-size:1.6rem;cursor:pointer}
+  .modal .eyebrow{color:var(--teal2);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:.8rem}
+  .modal h2{font-size:1.7rem;font-weight:900;margin:6px 0 18px}
+  #sumOut{font-size:1.16rem;line-height:1.6;white-space:pre-wrap}#sumOut strong{color:var(--gold)}
+  .keybox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:10px}
+  .keybox input{width:100%;background:rgba(255,255,255,.06);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;color:#fff;font-size:.95rem;margin:10px 0;font-family:inherit}
+  .keybox a{color:var(--teal2)}
+  .load{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:1.05rem}
+  .spin{width:24px;height:24px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--gold);border-radius:50%;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+  <div class="top">
+    <div><div class="eyebrow">Resultados en vivo</div><h1 id="titulo">Pulso de Equipo</h1></div>
+    <div class="counter"><div class="num grad" id="count">0</div><div class="lbl">respuestas</div></div>
+  </div>
+  <div class="bar"><button class="cta" onclick="openSummary()">✨ Generar resumen con IA</button>
+    <span style="color:var(--muted);font-size:.86rem">Se actualiza cada 4s</span></div>
+  <div class="tabs" id="tabs"></div>
+  <div class="grid" id="grid"><div class="empty"><div class="p">📡</div>Esperando las primeras respuestas…</div></div>
+
+  <div class="overlay" id="overlay"><div class="modal">
+    <button class="close" onclick="closeS()">&times;</button>
+    <div class="eyebrow">Resumen del equipo · hecho con IA</div>
+    <h2 id="sumTitle">Conclusiones</h2>
+    <div id="sumBody"></div>
+  </div></div>
+  <canvas id="scanvas" width="1240" height="1754" style="display:none"></canvas>
+
+<script>
+const SB_URL="https://nvgkhdrrxqdgxktfkioa.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52Z2toZHJyeHFkZ3hrdGZraW9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MzY4MjYsImV4cCI6MjA5MzQxMjgyNn0.mikJZpOf6pIupH1w_hFlMIzCoOMB-wJCMJHyP46YLeg";
+/* Clave Gemini embebida (base64). Vacía => cada líder pega la suya una vez. */
+const EMBED_KEY=(function(){try{return atob("");}catch(e){return "";}})();
+const SES=new URLSearchParams(location.search).get('s');
+let cfg=null, rows=[], tab=0;
+const FIELDS=["r1","r2","r3"];
+
+function esc(s){return (s||'').replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));}
+async function loadCfg(){
+  if(!SES){document.getElementById('titulo').textContent='Consulta no encontrada';return;}
+  try{
+    const r=await fetch(SB_URL+"/rest/v1/pulso_sesiones?id=eq."+encodeURIComponent(SES)+"&select=titulo,q1,q2,q3",{headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY}});
+    const d=await r.json(); if(d&&d.length){cfg=d[0];document.getElementById('titulo').textContent=cfg.titulo||'Pulso de Equipo';renderTabs();}
+  }catch(e){}
+}
+function renderTabs(){
+  const qs=[cfg.q1,cfg.q2,cfg.q3];
+  document.getElementById('tabs').innerHTML=qs.map((q,i)=>
+    '<button class="tab'+(i===0?' active':'')+'" onclick="setTab('+i+')">'+(i+1)+'. '+esc((q||'').slice(0,42))+((q||'').length>42?'…':'')+'</button>').join('');
+}
+function setTab(k){tab=k;[...document.querySelectorAll('.tab')].forEach((t,i)=>t.classList.toggle('active',i===k));render();}
+async function poll(){
+  if(!SES)return;
+  try{
+    const r=await fetch(SB_URL+"/rest/v1/pulso_respuestas?sesion=eq."+encodeURIComponent(SES)+"&select=*&order=created_at.asc",{headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY}});
+    if(r.ok){rows=await r.json();render();}
+  }catch(e){}
+}
+function render(){
+  document.getElementById('count').textContent=rows.length;
+  const grid=document.getElementById('grid');
+  const wt=rows.filter(r=>(r[FIELDS[tab]]||'').trim());
+  if(!wt.length){grid.innerHTML='<div class="empty"><div class="p">📡</div>Aún no hay respuestas para esta pregunta.</div>';return;}
+  grid.innerHTML=wt.slice().reverse().map(r=>'<div class="resp"><div class="who">'+esc(r.nombre||'Anónimo')+'</div><div class="txt">'+esc(r[FIELDS[tab]])+'</div></div>').join('');
+}
+
+/* ===== GEMINI ===== */
+const MODELS=["gemini-flash-latest","gemini-2.5-flash","gemini-2.0-flash","gemini-1.5-flash"];let wm=null;
+function getKey(){if(EMBED_KEY)return EMBED_KEY;try{return localStorage.getItem("icone_gemini_key")||""}catch(e){return""}}
+function setKey(k){try{localStorage.setItem("icone_gemini_key",k)}catch(e){}}
+async function callGemini(prompt,sys){
+  const body={contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{temperature:0.6,maxOutputTokens:1500}};
+  if(sys)body.systemInstruction={parts:[{text:sys}]};
+  const list=wm?[wm]:MODELS;let last="";
+  for(const m of list){try{
+    const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+m+":generateContent",
+      {method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":getKey()},body:JSON.stringify(body)});
+    if(!r.ok){const t=await r.text();
+      if(r.status===400&&/API key not valid|API_KEY_INVALID/i.test(t))throw{fatal:1,msg:"La clave de IA no es válida."};
+      if(r.status===429)throw{fatal:1,msg:"Límite gratuito por ahora. Espera un momento e intenta de nuevo."};
+      last="HTTP "+r.status;continue;}
+    const d=await r.json();const tx=d?.candidates?.[0]?.content?.parts?.map(p=>p.text).join("")||"";
+    if(!tx){last="vacío";continue;} wm=m;return tx;
+  }catch(e){if(e&&e.fatal)throw e;last=e.message||String(e);}}
+  throw{msg:"No se pudo conectar con la IA ("+last+")."};
+}
+function openSummary(){
+  document.getElementById('overlay').classList.add('show');
+  const b=document.getElementById('sumBody');
+  if(!getKey()){
+    b.innerHTML='<div class="keybox"><p>Para generar el resumen con IA, pega una vez tu clave gratuita de Google Gemini (se guarda solo en este navegador).</p>'+
+      '<input id="gk" type="password" placeholder="Clave de Gemini (AIza...)">'+
+      '<p style="font-size:.85rem;color:var(--muted)">Gratis en <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com/app/apikey</a></p>'+
+      '<button class="btn btn-gold" style="margin-top:8px" onclick="saveGo()">Guardar y generar ✨</button></div>';return;
+  }
+  gen();
+}
+function saveGo(){const k=document.getElementById('gk').value.trim();if(k){setKey(k);gen();}}
+function closeS(){document.getElementById('overlay').classList.remove('show');}
+let lastSum="",sumURL="";
+async function gen(){
+  const b=document.getElementById('sumBody');
+  const data=rows.filter(r=>(r.r1||r.r2||r.r3));
+  if(!data.length){b.innerHTML='<p style="color:var(--muted)">Aún no hay respuestas para resumir.</p>';return;}
+  b.innerHTML='<div class="load"><div class="spin"></div>Resumiendo '+data.length+' respuestas…</div>';
+  const blk=(q,f)=>q+"\n"+data.map(r=>r[f]).filter(Boolean).map(t=>"- "+t).join("\n");
+  const sys="Eres un facilitador de equipos. Resumes de forma clara, útil y accionable las respuestas de un equipo. Español neutro y profesional. No inventes datos: básate solo en lo que dijeron.";
+  const prompt="Tema: "+(cfg.titulo||"Consulta")+". Resume las respuestas del equipo en máximo 170 palabras, con estos 3 encabezados en negrita markdown: **Lo que más se repite**, **Puntos de consenso y tensiones**, **Primer paso recomendado**. Sé concreto.\n\n"+
+    "PREGUNTA 1 y respuestas:\n"+blk(cfg.q1,'r1')+"\n\nPREGUNTA 2 y respuestas:\n"+blk(cfg.q2,'r2')+"\n\nPREGUNTA 3 y respuestas:\n"+blk(cfg.q3,'r3');
+  try{
+    const md=await callGemini(prompt,sys);lastSum=md;renderSummary(md);
+    b.innerHTML='<div id="sumOut">'+mdToHtml(md)+'</div>'+
+      '<div style="display:flex;gap:12px;margin-top:22px;flex-wrap:wrap">'+
+      '<button class="btn btn-gold" style="flex:1;min-width:150px" onclick="dlPdf()">⬇ Descargar PDF</button>'+
+      '<button class="btn btn-teal" style="flex:1;min-width:150px" onclick="dlImg()">⬇ Imagen</button>'+
+      '<button class="btn btn-ghost" style="flex:1;min-width:120px" onclick="gen()">↻ Regenerar</button></div>';
+  }catch(e){
+    b.innerHTML='<p style="color:#ffb3ba">'+(e.msg||'Error')+'</p>'+
+      (e.fatal&&!EMBED_KEY?'<button class="btn btn-ghost" style="margin-top:12px" onclick="localStorage.removeItem(\'icone_gemini_key\');openSummary()">Cambiar clave</button>':'<button class="btn btn-gold" style="margin-top:12px" onclick="gen()">Reintentar</button>');
+  }
+}
+function mdToHtml(md){return esc(md).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n{2,}/g,'</p><p style="margin-top:14px">').replace(/^/,'<p>').replace(/$/,'</p>');}
+function vwrap(x,t,X,y,mw,lh){const w=(t||'').split(/\s+/);let l='',yy=y;for(const k of w){const s=l?l+' '+k:k;if(x.measureText(s).width>mw&&l){x.fillText(l,X,yy);l=k;yy+=lh;}else l=s;}if(l){x.fillText(l,X,yy);yy+=lh;}return yy;}
+function renderSummary(text){
+  const c=document.getElementById('scanvas'),x=c.getContext('2d'),W=1240,H=1754;
+  const g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,'#071531');g.addColorStop(1,'#04101f');x.fillStyle=g;x.fillRect(0,0,W,H);
+  const gg=x.createRadialGradient(W*.75,120,40,W*.75,120,700);gg.addColorStop(0,'rgba(0,183,168,.26)');gg.addColorStop(1,'rgba(0,183,168,0)');x.fillStyle=gg;x.fillRect(0,0,W,H);
+  x.strokeStyle='rgba(255,255,255,.1)';x.lineWidth=2;x.strokeRect(30,30,W-60,H-60);x.textBaseline='top';
+  x.fillStyle='#19d3c5';x.font='700 27px Inter,Arial,sans-serif';x.fillText('RESUMEN DEL EQUIPO · HECHO CON IA',80,84);
+  x.fillStyle='#fff';x.font='800 50px Inter,Arial,sans-serif';let ty=vwrap(x,(cfg&&cfg.titulo)||'Pulso de Equipo',80,124,W-160,58);
+  x.strokeStyle='rgba(255,178,62,.55)';x.lineWidth=3;x.beginPath();x.moveTo(80,ty+22);x.lineTo(W-80,ty+22);x.stroke();
+  let y=ty+64;const mw=W-160;
+  (text||'').replace(/\r/g,'').split(/\n+/).map(s=>s.trim()).filter(Boolean).forEach(seg=>{
+    const hm=seg.match(/^\*\*(.+?)\*\*[:：]?\s*(.*)$/);
+    if(hm){x.fillStyle='#ffb23e';x.font='700 33px Inter,Arial,sans-serif';y=vwrap(x,hm[1],80,y+8,mw,42)+4;
+      if(hm[2]){x.fillStyle='#e8eef5';x.font='400 31px Inter,Arial,sans-serif';y=vwrap(x,hm[2].replace(/\*\*/g,''),80,y,mw,44)+16;}}
+    else{x.fillStyle='#e8eef5';x.font='400 31px Inter,Arial,sans-serif';y=vwrap(x,seg.replace(/\*\*/g,''),80,y,mw,44)+16;}
+  });
+  x.fillStyle='rgba(255,255,255,.45)';x.font='500 23px Inter,Arial,sans-serif';x.fillText('Pulso de Equipo · IA aplicada para líderes · '+new Date().toLocaleDateString('es-CO'),80,H-72);
+  sumURL=c.toDataURL('image/png');
+}
+const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function dlImg(){if(!sumURL)renderSummary(lastSum);if(isIOS){window.open(sumURL,'_blank');return;}const a=document.createElement('a');a.download='Resumen-equipo.png';a.href=sumURL;document.body.appendChild(a);a.click();a.remove();}
+function dlPdf(){try{if(!sumURL)renderSummary(lastSum);const {jsPDF}=window.jspdf;const p=new jsPDF({orientation:'portrait',unit:'pt',format:[595,842]});p.addImage(sumURL,'PNG',0,0,595,842);p.save('Resumen-equipo.pdf');}catch(e){dlImg();}}
+
+loadCfg();poll();setInterval(poll,4000);
+</script>
+</body>
+</html>
