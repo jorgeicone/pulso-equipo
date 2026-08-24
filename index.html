@@ -49,6 +49,16 @@
 </style>
 </head>
 <body>
+<div id="gate" style="position:fixed;inset:0;z-index:100;background:radial-gradient(1200px 600px at 50% -10%,#0d2444,#050d1f 55%);display:flex;align-items:center;justify-content:center;padding:24px">
+  <div style="max-width:400px;width:100%;text-align:center">
+    <div class="brandbar" style="justify-content:center"><span class="dot"></span><span>Acceso para líderes</span></div>
+    <h1 style="font-size:1.6rem;margin:10px 0 6px">Pulso de <span class="grad">Equipo</span></h1>
+    <p style="color:var(--muted);font-size:.92rem;margin-bottom:18px">Ingresa la clave para crear tus consultas.</p>
+    <input id="clave" class="ic" type="password" placeholder="Clave de ingreso" style="text-align:center" onkeydown="if(event.key==='Enter')unlock()" autocomplete="off">
+    <button class="btn btn-primary" onclick="unlock()" style="margin-top:12px">Entrar</button>
+    <div id="claveErr" style="color:#ffb3ba;font-size:.85rem;margin-top:10px;display:none">Clave incorrecta. Intenta de nuevo.</div>
+  </div>
+</div>
 <div class="wrap">
   <div class="brandbar"><span class="dot"></span><span>Herramienta para líderes · IA aplicada</span></div>
 
@@ -105,6 +115,16 @@
 </div>
 <div class="toast" id="toast">Copiado ✓</div>
 
+<script>
+const CLAVE=(function(){try{return atob("SUNPTkUyMDMw")}catch(e){return""}})();
+function gateOK(){try{return sessionStorage.getItem("pulso_lideres_ok")==="1"}catch(e){return false}}
+function unlock(){
+  var v=(document.getElementById('clave').value||'').trim();
+  if(v===CLAVE){try{sessionStorage.setItem("pulso_lideres_ok","1")}catch(e){}document.getElementById('gate').style.display='none';}
+  else{document.getElementById('claveErr').style.display='block';}
+}
+if(gateOK()){document.getElementById('gate').style.display='none';}else{setTimeout(function(){var c=document.getElementById('clave');if(c)c.focus();},100);}
+</script>
 <script>
 const SB_URL="https://nvgkhdrrxqdgxktfkioa.supabase.co";
 const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52Z2toZHJyeHFkZ3hrdGZraW9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MzY4MjYsImV4cCI6MjA5MzQxMjgyNn0.mikJZpOf6pIupH1w_hFlMIzCoOMB-wJCMJHyP46YLeg";
